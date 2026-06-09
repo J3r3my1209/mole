@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import admin from 'firebase-admin';
 import conectarDB from './config/db.js';
 import usuarioRouter from './routers/usuarioRouter.js';
-import gastoRouter from './routers/gastoRouter.js'; // Tu nuevo router
+import gastoRouter from './routers/gastoRouter.js'; 
+import adminRouter from './routers/adminRouter.js';
 import { readFileSync } from 'fs';
 
 // 1. Configurar variables de entorno y base de datos
@@ -21,17 +22,17 @@ if (process.env.FIREBASE_KEYS_JSON) {
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(firebaseConfig)
+    credential: admin.credential.cert(firebaseConfig)
 });
 
-// 3. CREAR LA APP PRIMERO (Esto soluciona el error)
+// 3. CREAR LA APP PRIMERO
 const app = express();
 
 // 4. Middlewares globales
 app.use(cors({
   origin: [
-    'http://localhost:5173', // Para cuando programes en tu computadora
-    'https://ntdu.vercel.app' // ¡Tu enlace real de producción!
+    'http://localhost:5173', 
+    'https://ntdu.vercel.app' 
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -40,9 +41,10 @@ app.use(cors({
 
 app.use(express.json());
 
-// 5. Definir las rutas (Ahora sí, app existe y no va a crashear)
+// 5. Definir las rutas
 app.use('/api/usuarios', usuarioRouter);
 app.use('/api/gastos', gastoRouter); 
+app.use('/api/admin', adminRouter); // 👈 2. REGISTRAMOS LAS RUTAS DE ADMINISTRACIÓN
 
 // Ruta base de prueba
 app.get('/', (req, res) => {

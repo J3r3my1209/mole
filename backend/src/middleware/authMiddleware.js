@@ -1,34 +1,47 @@
-import jwt from 'jsonwebtoken';
-import Usuario from '../models/usuario.js';
+import admin from '../config/firebase.js'; 
+import Usuario from '../models/usuario.js'; 
 
 const checkAuth = async (req, res, next) => {
     let token;
     
-    // Verificar si el token viene en las cabeceras (Headers) como Bearer Token
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // Separar la palabra "Bearer" del token real
             token = req.headers.authorization.split(' ')[1];
+            const decodedToken = await admin.auth().verifyIdToken(token);
             
-            // Decodificar el token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            let emailDetectado = decodedToken.email || "";
+            if (emailDetectado) {
+                emailDetectado = emailDetectado.trim().toLowerCase();
+            }
+
+            req.usuario = {
+                uid: decodedToken.uid,
+                email: emailDetectado,
+                name: decodedToken.name || "Usuario de Google"
+            };
+
+            if (emailDetectado) {
+                try {
+                    const usuarioBD = await Usuario.findOne({ correo: emailDetectado });
+                    if (usuarioBD) {
+                        req.usuario = usuarioBD;
+                        req.usuario.id = usuarioBD._id; 
+                    }
+                } catch (dbError) {
+                    console.error("Error al buscar en la base de datos dentro del middleware:", dbError);
+                }
+            }
             
-            // Buscar el usuario en la BDD por su ID y traerlo sin el password
-            req.usuario = await Usuario.findById(decoded.id).select('-password');
-            
-            return next(); // Continuar al siguiente controlador (ej. perfil)
+            return next(); 
         } catch (error) {
-            const e = new Error('Token no válido o expirado.');
-            return res.status(403).json({ msg: e.message });
+            console.error("Error crítico al verificar token de Firebase en middleware:", error);
+            return res.status(403).json({ msg: 'Token no válido o expirado desde Firebase.' });
         }
     }
 
     if (!token) {
-        const error = new Error('Token no proporcionado o inexistente.');
-        return res.status(401).json({ msg: error.message });
+        return res.status(401).json({ msg: 'Token no proporcionado o inexistente.' });
     }
-
-    next();
 };
 
 export default checkAuth;

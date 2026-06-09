@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { auth } from '../config/firebase';
+import { auth } from '../config/firebase'; 
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
-export const Navbar = () => {
+export const Navbar = ({ usuario }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -16,8 +16,9 @@ export const Navbar = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem('token');
     } catch (error) {
-      console.error("Error al salir:", error);
+      console.error("Error al intentar cerrar sesión:", error);
     }
   };
 
@@ -35,17 +36,21 @@ export const Navbar = () => {
               <p className="text-sm font-medium text-gray-900">
                 Hola, {user.displayName || 'Usuario'}
               </p>
-              <div className="flex gap-3 justify-end">
-                <Link
-                  to="/profile"
-                  className="text-xs text-[#00E56A] hover:underline"
-                >
+              <div className="flex gap-3 justify-end items-center">
+                
+                {((usuario && usuario.role === 'admin') || (user && user.email && user.email.trim().toLowerCase() === 'vivasmoreirajeremy@gmail.com')) && (
+                  <Link
+                    to="/admin"
+                    className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-semibold px-2.5 py-1 rounded transition-colors mr-1 shadow-sm"
+                  >
+                    Panel Admin
+                  </Link>
+                )}
+
+                <Link to="/profile" className="text-xs text-[#00E56A] hover:underline">
                   Mi perfil
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-xs text-red-500 hover:underline"
-                >
+                <button onClick={handleLogout} className="text-xs text-red-500 hover:underline">
                   Cerrar sesión
                 </button>
               </div>

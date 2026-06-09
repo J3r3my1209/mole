@@ -1,24 +1,12 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
 
-const usuarioSchema = new Schema({
-    firebaseId: {
-        type: String,
-        required: true,
-        unique: true, // Aquí se guarda el UID único que genera Firebase
-    },
-    nombre: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true
-    }
-}, {
-    timestamps: true
+const usuarioSchema = new mongoose.Schema({
+  nombre: { type: String, required: true },
+  correo: { type: String, required: true, unique: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }, 
+  activo: { type: Boolean, default: true } 
 });
 
-export default model('Usuario', usuarioSchema);
+// ¡ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ ASÍ!
+const Usuario = mongoose.model('Usuario', usuarioSchema);
+export default Usuario;
